@@ -1,0 +1,27 @@
+name: Release
+
+# Push a tag like v1.1.0 and this publishes a GitHub release with the card attached.
+# HACS shows the latest release as the version to install.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the version in the card matches the tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          grep -q "const FLB_VERSION = '${tag}';" dist/ha-family-link-bubble-card.js \
+            || { echo "FLB_VERSION in the card is not ${tag}"; exit 1; }
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ha-family-link-bubble-card.js
+          generate_release_notes: true
