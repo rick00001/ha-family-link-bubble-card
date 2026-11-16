@@ -22,7 +22,7 @@
  * Bubble Card theme variables (--bubble-main-background-color, --bubble-accent-color,
  * --bubble-border-radius, ...) are honoured, so it matches your Bubble Card dashboard.
  */
-const FLB_VERSION = '1.1.0';
+const FLB_VERSION = '1.1.1';
 const FLB_SECTIONS = ['today', 'bonus', 'restrictions', 'apps', 'week', 'schedule', 'settings'];
 
 const FLB_STR = {
@@ -111,6 +111,11 @@ ha-card.full { background: var(--ha-card-background, var(--card-background-color
 .b.on .bg { opacity: .5; }
 .b .fill { position: absolute; inset: 0 auto 0 0; z-index: -1; background: var(--fl-accent); opacity: .5; transition: width .3s; border-radius: 0 var(--fl-r) var(--fl-r) 0; }
 .b.locked .fill { background: var(--fl-bad); opacity: .28; }
+.b .track { position: absolute; left: 18px; right: 18px; bottom: 3px; height: 3px; border-radius: 3px; background: color-mix(in srgb, currentColor 10%, transparent); overflow: hidden; pointer-events: none; }
+.b .track i { display: block; height: 100%; border-radius: 3px; background: var(--fl-accent); transition: width .3s; }
+.b.locked .track i { background: var(--fl-bad); }
+.b.has-track .bottom { padding-bottom: 12px; }
+.b.has-track:not(:has(.bottom)) .row { padding-bottom: 6px; }
 .row { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 10px 0 10px; }
 .icon { flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--fl-iconbg); --mdc-icon-size: 22px; transition: background .3s, color .3s; }
 .b.on .icon { color: var(--fl-accent); }
@@ -126,6 +131,13 @@ ha-card.full { background: var(--ha-card-background, var(--card-background-color
 .bottom .s.wide { flex: 0 0 auto; padding: 0 14px; }
 .s > span { overflow: hidden; text-overflow: ellipsis; }
 .large .row { padding: 0 8px 0 10px; }
+.main-wrap { container-type: inline-size; }
+@container (max-width: 440px) {
+	.bottom .s.wide, .bottom .s.chev { flex: 0 0 36px; width: 36px; padding: 0; }
+	.bottom .s.wide > span, .bottom .s.bonus > ha-icon { display: none; }
+	.bottom .s.bonus { padding: 0 6px; }
+	.subs .lbl { display: none; }
+}
 
 /* --- Sub-buttons -------------------------------------------------------- */
 .s { position: relative; height: 36px; border-radius: 18px; border: none; background: var(--fl-sub); color: inherit; font: inherit; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; white-space: nowrap; cursor: pointer; --mdc-icon-size: 18px; transition: background .25s, transform .1s; overflow: hidden; min-width: 36px; }
@@ -396,24 +408,29 @@ class FamilyLinkBubbleCard extends HTMLElement {
 		const btn = (act, icon, label, extra = '') => `<button class="s ${extra}" data-act="${act}"><ha-icon icon="${icon}"></ha-icon>${label ? `<span>${flbEsc(label)}</span>` : ''}</button>`;
 		const bottom = [
 			btn('lock', s.usable ? 'mdi:lock' : 'mdi:lock-open-variant', s.usable ? this._t('lock') : this._t('unlock'), s.usable ? 'wide' : 'wide bad'),
-			this._d('bonus_15min') ? btn('press:bonus_15min', 'mdi:timer-plus-outline', '+15') : '',
-			this._d('bonus_30min') ? btn('press:bonus_30min', 'mdi:timer-plus-outline', '+30') : '',
-			this._d('bonus_60min') ? btn('press:bonus_60min', 'mdi:timer-plus-outline', '+60') : '',
-			full ? '' : btn('open', 'mdi:chevron-up', ''),
+			this._d('bonus_15min') ? btn('press:bonus_15min', 'mdi:timer-plus-outline', '+15', 'bonus') : '',
+			this._d('bonus_30min') ? btn('press:bonus_30min', 'mdi:timer-plus-outline', '+30', 'bonus') : '',
+			this._d('bonus_60min') ? btn('press:bonus_60min', 'mdi:timer-plus-outline', '+60', 'bonus') : '',
+			full ? '' : btn('open', 'mdi:chevron-up', '', 'chev'),
 		].join('');
 		const main = `
-			<div class="b large ${s.usable ? '' : 'locked'}" data-act="${full ? 'more:d:lock' : 'open'}">
-				<div class="fill" style="width:${s.pct}%"></div>
+			<div class="main-wrap"><div class="b large has-track ${s.usable ? '' : 'locked'}" data-act="${full ? 'more:d:lock' : 'open'}">
+				${this._track(s)}
 				<div class="row">
 					<div class="icon ${s.usable ? 'ok' : 'bad'}"><ha-icon icon="${s.icon}"></ha-icon></div>
 					<div class="names"><div class="name">${flbEsc(name)}</div><div class="state">${flbEsc(stateLine)}</div></div>
 					<div class="subs">${subs.join('')}</div>
 				</div>
 				<div class="bottom">${bottom}</div>
-			</div>`;
+			</div></div>`;
 		const body = full ? `<div class="stack">${main}${this._sectionsHtml()}</div>` : main;
 		this.shadowRoot.innerHTML = `<style>${FLB_CSS}</style><ha-card class="fl ${full ? 'full' : ''}">${body}</ha-card>`;
 		if (this._layer && this._layer.open) this._renderPopup();
+	}
+
+	/** Thin usage bar at the bottom of a bubble (red when the device is locked). */
+	_track(s) {
+		return `<div class="track"><i style="width:${s.pct}%"></i></div>`;
 	}
 
 	/** The integration words the next restriction in English ("School time (ends at 17:00)"): reword it, in 24 h. */
@@ -704,8 +721,8 @@ class FamilyLinkBubbleCard extends HTMLElement {
 		const ring = this._d('ring') ? `<button class="s icon-only" data-act="ring" title="${flbEsc(this._t('ring'))}"><ha-icon icon="mdi:bell-ring-outline"></ha-icon></button>` : '';
 		const batt = isNaN(s.battery) ? '' : `<span class="s ghost"><ha-icon icon="${this._battIcon(s.battery)}"></ha-icon>${Math.round(s.battery)}%</span>`;
 		L.hdr.innerHTML = `
-			<div class="b static ${s.usable ? '' : 'locked'}">
-				<div class="fill" style="width:${s.pct}%"></div>
+			<div class="b static has-track ${s.usable ? '' : 'locked'}">
+				${this._track(s)}
 				<div class="row">
 					<div class="icon ${s.usable ? 'ok' : 'bad'}" data-act="more:d:lock" style="cursor:pointer"><ha-icon icon="${s.icon}"></ha-icon></div>
 					<div class="names"><div class="name">${flbEsc(this._devName())}</div><div class="state">${flbEsc([s.label, this._childName()].filter(Boolean).join(' · '))}</div></div>

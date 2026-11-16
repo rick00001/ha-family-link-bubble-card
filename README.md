@@ -32,7 +32,7 @@ Or by hand:
 
 ### Manual
 1. Copy `dist/ha-family-link-bubble-card.js` to `/config/www/`.
-2. Go to **Settings → Dashboards → ⋮ → Resources → Add resource**. URL: `/local/ha-family-link-bubble-card.js?v=1.1.0`, type: **JavaScript module**.
+2. Go to **Settings → Dashboards → ⋮ → Resources → Add resource**. URL: `/local/ha-family-link-bubble-card.js?v=1.1.1`, type: **JavaScript module**.
 3. Reload the browser. Raise `?v=` every time you update the file.
 
 ## Usage
@@ -62,10 +62,11 @@ The card only needs the device switch. It finds every other entity of the child 
 ## What's in it
 
 - **Compact card:**
-  - A fill showing used ÷ (limit + bonus), and a green or red icon.
+  - A thin bar along the bottom showing used ÷ (limit + bonus), red when the device is locked, and a green or red icon.
   - The status (Available, Locked, Bedtime, School time, Limit reached or Bonus active), with the next restriction in 24-hour time ("School time · until 17:00").
   - Time left and battery.
   - **Lock/Unlock** (asks to confirm), **+15 +30 +60**, and **▲** for the details.
+  - On a narrow card (phone, small laptop) Lock/Unlock and ▲ shrink to icons, so +15, +30 and +60 stay readable.
 - **Pop-up / full card:**
   - **Today:** used, left, limit, bonus, next restriction, and a lock tile.
   - **Time bonus:** +15, +30, +60, Reset, and a custom amount.
