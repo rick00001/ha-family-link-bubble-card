@@ -388,7 +388,7 @@ class FamilyLinkBubbleCard extends HTMLElement {
 		const nextTxt = this._nextText(next, reason);
 		const why = this._t('why');
 		const label = !lock ? '' : reason && reason !== 'none' ? why[reason] || reason : usable ? this._t('available') : why.manually_locked;
-		let icon = this._config.icon || (lock && lock.attributes.icon) || 'mdi:cellphone';
+		let icon = this._config.icon || (reason === 'bonus_active' ? 'mdi:timer-plus' : (lock && lock.attributes.icon) || 'mdi:cellphone');
 		if (!this._config.icon && !usable && icon === 'mdi:cellphone') icon = 'mdi:cellphone-lock';
 		const battery = flbNum(this._d('battery_level'));
 		return { lock, usable, reason, used, limit, bonus, left, total, pct, nextTxt, label, icon, battery };
